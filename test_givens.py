@@ -24,8 +24,8 @@ def test_simple_L():
 
     Anew = givens.apply_Givens_rotation_f(row_a, row_b, (c, s), A)
     assert util.close_zero(Anew[row_a, col_tgt])
-    Anew2 = givens.apply_Givens_rotation(row_a, row_b, (c, s), A)
-    assert util.close_zero(Anew2[row_a, col_tgt])
+    # Anew2 = givens.apply_Givens_rotation(row_a, row_b, (c, s), A)
+    # assert util.close_zero(Anew2[row_a, col_tgt])
     
 
 def test_simple_R():
@@ -45,11 +45,11 @@ def test_simple_R():
     c, s = givens.givens(A[row_tgt, col_b], 
                          A[row_tgt, col_a]) # this is the value we want to zero
 
-    Anew = givens.apply_Givens_rotation(col_a, col_b, (c, s), A, "R")
+    Anew = givens.apply_Givens_rotation_f(col_a, col_b, (c, s), A, "R")
     print A
     print Anew
 
-    # assert util.close_zero(Anew[row_a, col_tgt])
+    assert util.close_zero(Anew[row_tgt, col_a])
     # Anew2 = givens.apply_Givens_rotation(row_a, row_b, (c, s), A)
     # assert util.close_zero(Anew2[row_a, col_tgt])
     

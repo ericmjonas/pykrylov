@@ -23,13 +23,13 @@ def bulgechasing_gk_svd_step(B, shift):
     for i in range(l-1):
         print "ITER", i, "="*60
         c, s = givens.givens(y, z)
-        B = givens.apply_Givens_rotation(i, i+1, (c, s), B, direction='R')
+        B = givens.apply_Givens_rotation_f(i+1, i, (c, s), B, direction='R')
         print B
         y = B[i, i]
         z = B[i+1, i]
         
         c, s = givens.givens(y, z)
-        B = givens.apply_Givens_rotation(i, i+1, (c, s), B, direction='L')
+        B = givens.apply_Givens_rotation_f(i+1, i, (c, s), B, direction='L')
         print B
         if i < l-2:
             y = B[i, i+1]

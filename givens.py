@@ -99,9 +99,13 @@ def apply_Givens_rotation_f(i, j, (c, s),  M,  direction="L"):
 
     N = len(M)
 
-
+    
     G = create_full_Givens_matrix(i, j, (c, s), N)
+    if direction == "L":
+        return np.dot(G, M)
+    else:
+        return np.dot(M, G.T)
+        
 
-    return np.dot(G, M)
 
     
