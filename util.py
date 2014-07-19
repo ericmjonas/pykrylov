@@ -45,3 +45,14 @@ def min_dist_in_frac(x, a):
         di = np.argmin(delta)
         d[xi] = np.abs(delta[di] / a[di])
     return d
+
+
+def assert_upper_triangular(X):
+    Xtu = np.tril(X, -1)
+    np.testing.assert_array_almost_equal(Xtu, np.zeros_like(X))
+
+def close_zero(x):
+    if np.abs(x) < np.finfo(np.float).eps:
+        return True
+    return False
+    
