@@ -29,54 +29,58 @@ def givens(a, b):
             tau = -b/a
             c = 1/np.sqrt(1 + tau**2)
             s = c * tau
-    print "givens c=", c, "s=", s        
+    print "givens c=", c, "s=", s   
     return c, s
 
-def apply_Givens_rotation(i, k, M,  direction="L"):
+def apply_Givens_rotation(i, k, (c, s), M,  direction="L"):
     """
-    using GVR 5.1.9
-    direction : L means return M' = G M 
-                R means return M' = M G
 
+    using GVR 5.1.9
+    if direction = L :
+          
+         return M' = G M  
+    
     FIXME: perform in-place? 
     FIXME: handle sparse case
     
     """
     ## hilariously build up full matrix because why not? 
-
+    
     m, n = M.shape
     newM = M.copy()
 
     # FIXME vectorize
 
     if direction == "L":
-        c, s, = givens(M[i-1, k], M[i, k])
+        print "applying givens, row i = ", i, "row k=", k
         for j in range(n):
-            t2 = M[i, j]
             t1 = M[k, j]
+            t2 = M[i, j]
             a = c*t1 - s*t2
             b = s*t1 + c * t2
-            print "j=", j, "t1=", t1, "t2=", t2, "a=", a, "b=", b
-            newM[k, j] = a 
             newM[i, j] = b
+            newM[k, j] = a
 
     elif direction == 'R':
-        c, s, = givens(M[i, k], M[i, k-1])
+        print "applying givens, col i = ", i, "col j=", k
         for j in range(m):
-            t1 = M[j, i]
-            t2 = M[j, k]
-            newM[j, i] = c*t1 - s*t2
-            newM[j, k] = s*t1 + c*t2
+            t1 = M[j, k]
+            t2 = M[j, i]
+            a = c*t1 - s*t2
+            b = s*t1 + c * t2
+            newM[j, i] = b
+            newM[j, k] = a
+
+            
     return newM
 
 
-def create_full_Givens_matrix(i, j, theta_params, size):
+def create_full_Givens_matrix(i, j, (c, s), size):
     ## hilariously build up full matrix because why not? 
 
     N = size
     G = np.eye(N)
 
-    c, s = theta_params
     G[i, i] = c
     G[j, j] = c
     G[j, i] = -s
@@ -84,7 +88,7 @@ def create_full_Givens_matrix(i, j, theta_params, size):
     
     return G
     
-def apply_Givens_rotation_f(i, j, M,  direction="L"):
+def apply_Givens_rotation_f(i, j, (c, s),  M,  direction="L"):
     """
     
     FIXME: perform in-place? 
@@ -95,12 +99,8 @@ def apply_Givens_rotation_f(i, j, M,  direction="L"):
 
     N = len(M)
 
-    x = M[i-1, j]
-    y = M[i, j]
-    tp = givens(x, y)
 
-
-    G = create_full_Givens_matrix(i, j, tp, N)
+    G = create_full_Givens_matrix(i, j, (c, s), N)
 
     return np.dot(G, M)
 
