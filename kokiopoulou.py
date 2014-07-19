@@ -17,59 +17,38 @@ import numpy as np
 from util import norm
 
 
-def lanczos_bidiagonalization(A, p0, k):
+def bulgechasing_golub_kahan_svd(Tl, mu):
     """
-    Lanczos bidiagonalization as presented in above paper
-    (algorithm 1)
-
-    inputs:
-
-    Linear Operator : as defined in util
-    p0 : start vector 
-    k : number of iters
-
-    output: 
-    B_k :  bidiagonal real matrix, size (k+1) x k
-    U_kp1  : Orthogonal bases U_{k+1} \in C, m x (k+1) 
-    V_k  : Orthogonal bases V_{k} \in C, n x (k) 
-    
-    Note that we infer the correct dtype based on p0
-
-    FIXME: Don't return dense B_k
-
+    Bulgechasing (?) Golub-Kahan SVD step (algorithm 2)
+    We need to implement the ability to perform p implicit QR 
     """
-    
-    dtype = p0.dtype
+    y = T[0, 0]
+    z = T[0, 1]
+    for i in range(l-1):
+        # who KNOWS what's happening here? 
+        pass
 
-    betas = np.zeros(k+1)
-    alphas = np.zeros(k)
-    m, n = A.dims()
-    U = np.zeros((m, k+1), dtype=dtype)
-    V = np.zeros((n, k+1), dtype=dtype)
 
-    # init
-    betas[0] = norm(p0)
-    U[:, 0] = p0/betas[0]
-    V[:, 0] = 0 
-    for i in range(k):
-        r = A.compute_ATx(U[:, i]) 
-        if i > 0: 
-            r -= np.dot(betas[0], V[:, i]) 
-        alphas[i] = norm(r)
-        V[:, i+1]  = r/alphas[i]
-        p = A.compute_Ax(V[:, i+1]) - alphas[i]*U[:, i]
-        betas[i+1] = norm(p)
-        U[:, i+1] = p / betas[i+1]
+def irlanb(A, k, p, eignum, tol, u_init, shifts = 'ritz'):
 
-    B = np.zeros((k+1, k), dtype = dtype)
+    l = k + p
+    # compute bases U_lp1, Vl, Bl, via LBD
 
-    for i in range(k):
-        B[i, i] = alphas[i]
-        B[i+1, i] = betas[i+1]
+    while convergence == False:
 
-    return B, U, V[:, 1:]
-
+        # perfom the shifts
+        if shifts == 'ritz':
+            U, s, V= np.linalg.svd(Bl)
+        elif shifts == 'harmonic':
+            pass
         
-    
-    
-    
+        # use bulgechasing on Bl with the p largest sigma_i as shifts
+        # and update the LBD factorization 
+        
+        # compute approximation of min singular value
+        
+        # compute refined residual 
+        
+        
+
+        # check convergence of singular values
