@@ -8,3 +8,7 @@ Material :
 Golub, Van Loan - Matrix Computation [4th ed]
 
 
+
+
+Augmented Implicitly Restarted Lanczos Bidiagonalization Methods
+
