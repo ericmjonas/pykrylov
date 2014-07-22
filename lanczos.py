@@ -64,7 +64,8 @@ def partial_lanczos_bidiagonalization(A, p1, m):
     """
     
     l, n = A.dims()
-    assert len(p1) == l
+    assert l >= n
+    assert len(p1) == n 
     
     P = np.zeros((n, m))
     Q = np.zeros((l, m))
