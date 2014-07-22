@@ -5,8 +5,9 @@ import lanczos
 
 
 def test_simple():
-    N = 150
-    M = 10
+    np.random.seed(0)
+    N = 15
+    M = 5
     A = np.random.normal(0, 1, (N, M))
     
     U, s, V = np.linalg.svd(A)
@@ -16,7 +17,7 @@ def test_simple():
     x_init = np.random.normal(0, 1, M)
     x_init = x_init / util.norm(x_init)
     m = 10
-    k = 3 
+    k = 7
     ### FIRST WE DO RAW LANCZOS
     U, s, V = np.linalg.svd(A)
     P, Q, B, rm  = lanczos.partial_lanczos_bidiagonalization(opA, x_init, m)
