@@ -69,6 +69,9 @@ def test_m_partial_lanczos_bidiag_rect():
     percent_diff = util.min_dist_in_frac(s_l, s)
     print percent_diff
 
+    # sanity check Lanczos identities eqn 1.3-1.5
+    assert np.sum(np.abs(opA.compute_Ax(P) - np.dot(Q, B))) < 1e-9
+    assert np.sum(np.abs(opA.compute_ATx(Q) - np.dot(P, B.T) - np.outer(rm, np.eye(m)[-1]))) < 1e-9
     print np.dot(P[:, m-1].T, rm) 
     
     

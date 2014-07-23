@@ -6,8 +6,8 @@ import lanczos
 
 def test_simple():
     np.random.seed(0)
-    N = 15
-    M = 5
+    N = 30
+    M = 20
     A = np.random.normal(0, 1, (N, M))
     
     U, s, V = np.linalg.svd(A)
@@ -26,7 +26,7 @@ def test_simple():
 
 
     # then IRLBA
-    my_U, my_s, my_V = irlba.svd(opA, x_init, m, k, 1e-6)
+    my_U, my_s, my_V = irlba.svd(opA, x_init, k, m, 1e-6)
     
     percent_diff = util.min_dist_in_frac(my_s, s)
     print l_percent_diff

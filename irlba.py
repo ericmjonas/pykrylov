@@ -19,14 +19,14 @@ def sort_svd(U, s, V):
     ai = ai[::-1]
     return U[:, ai], s[ai], V[ai, :]
 
-def svd(A, p1, m, k, tol, harmonic=False, largest=True):
+def svd(A, p1, k, m, tol, harmonic=False, largest=True):
     """
     Implementation of BR05 for computing singular triplets. 
 
     A: linear operator that can compute Ax and A*x, effective size l x n
     p1 : init vector of unit length, n elements
-    m : number of bidiagonalization steps
     k : number of desired singular triplets
+    m : number of bidiagonalization steps
     tol : tolerance for accepting approximated singular triplet
     harmonic : type of augmentation to use (Harmonic = True
     
@@ -52,8 +52,12 @@ def svd(A, p1, m, k, tol, harmonic=False, largest=True):
         #U, s, V = pick_extreme_svd(k, U, s, V, largest)
         U, s, V = sort_svd(U, s, V)
 
+        B_m_val = norm(rm)
+        p_m_plus_1 = rm/B_m_val
+        print "B_m_val, ||rm|| = ", B_m_val
+            
         # 3. check convergence
-        if iteration > 4:
+        if iteration > 100:
             return U, s, V.T
         # 4. compute augmenting vectors
         # approx singular triplets of A from singular triplets of Bm
@@ -61,33 +65,55 @@ def svd(A, p1, m, k, tol, harmonic=False, largest=True):
         v_A = np.dot(Pm, V.T)
 
         # let's do some sanity checking here
-        for i in range(k):
-
+        for i in range(k+1):
+            
             delta = np.sum(np.abs(A.compute_Ax(v_A[:, i]) - s[i]*u_A[:, i]))
-            print "DELTA=", delta, A.compute_Ax(v_A[:, i]).shape, (s[i]*u_A[:, i]).shape
+            #print "2.12 DELTA=", delta
+            assert_small(delta)
+            #dbg = A.compute_ATx(u_A[:, i]) - s[i]*v_A[:, i] - rm * np.dot(np.eye(m)[-1], U[:, i])
+            #delta = np.sum(np.abs(dbg))
+            
+            #assert_small(delta)
 
         print "Q", Qm.shape, U.shape, u_A.shape
         print "V", Pm.shape, V.shape, v_A.shape
         if not harmonic or np.linalg.cond(B) > 1./np.sqrt(epsilon):
+            # if not otherwise indicated matrices are with tildes
             # determine new matrices
             P = np.zeros((n, k+1))
             print "Pm.shape=", Pm.shape, "P.shape", P.shape
 
             P[:, :k] = v_A[:, :k]
-            p_m_plus_1 = rm/norm(rm)
             P[:, k] = p_m_plus_1
             
+            # DEBUG sanity check -- use eqn 3.3
+            dbg = A.compute_Ax(P)
+            for i in range(k):
+                delta = np.sum(np.abs(dbg[:, i] - s[i]*u_A[:, i]))
+                #print "subdelta i=", i, delta
+                assert_small(delta)
 
+                
             Q = np.zeros((l, k+1))
             Q[:, :k] = u_A[:, :k]
 
             # compute the rhos: # FIXME use the optimized trick
             rho = np.zeros(k)
+
+            for i in range(k):
+                #print "rho vals for", i
+                # hilariously we're going to walk through 
+                #rho_1 = np.dot(u_A[:, i].T, A.compute_Ax(p_m_plus_1)) # from first part
+                #rho_2 = np.dot(p_m_plus_1.T, A.compute_ATx(u_A[:, i]))
+                #rho_3 = np.dot(p_m_plus_1.T, s[i]*v_A[:, i] + rm * U[m-1, i])
+                rho_4 =  B_m_val*U[m-1, i]
+
+                #print rho[i], rho2, Bm[m-1, m-1]
+
+                rho[i] = rho_4
+
             run_tot = A.compute_Ax(p_m_plus_1)
             for i in range(k):
-                #rho[i] = np.dot(u_A[:, i].T, A.compute_Ax(p_m_plus_1))
-                rho[i] = Bm[m-1, m-1] * u_A[m, i]
-                #print rho[i], rho2, Bm[m-1, m-1]
                 run_tot -= rho[i] * u_A[:, i]
 
             r_tilde_k = run_tot
@@ -97,7 +123,15 @@ def svd(A, p1, m, k, tol, harmonic=False, largest=True):
             for i in range(k):
                 B[i, i] = s[i] 
                 B[i, k] = rho[i] 
-            B[k, k] = Bm[k, k] # alpha
+            B[k, k] = norm(r_tilde_k) # INFERENCE FROM EQUATIONS
+
+            # DEBUG check the identity from 3.7
+            dbg = A.compute_Ax(P) - np.dot(Q, B)
+            for i in range(k+1):
+                print "2 subdelta i=", i, np.sum(np.abs(dbg[:, i]))
+            print A.compute_Ax(P)[:, -1]
+            print np.dot(Q, B)[:, -1]
+            
             f_k_plus_1 = A.compute_ATx(r_tilde_k) / norm(r_tilde_k) - norm(r_tilde_k)*p_m_plus_1
             r = f_k_plus_1
             # now a santiy check
