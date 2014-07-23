@@ -49,16 +49,15 @@ def svd(A, p1, k, m, tol, harmonic=False, largest=True):
     while True:
         print "ITERATION", iteration, "-"*40
         U, s, V = np.linalg.svd(Bm, full_matrices=True)
-        #U, s, V = pick_extreme_svd(k, U, s, V, largest)
-        U, s, V = sort_svd(U, s, V)
+        U, s, V = pick_extreme_svd(k+1, U, s, V, True)
+        #U, s, V = sort_svd(U, s, V)
 
         B_m_val = norm(rm)
         p_m_plus_1 = rm/B_m_val
-        print "B_m_val, ||rm|| = ", B_m_val
             
         # 3. check convergence
-        if iteration > 100:
-            return U, s, V.T
+        if iteration > 1000:
+            return U[:, :k], s[:k], V[:k]
         # 4. compute augmenting vectors
         # approx singular triplets of A from singular triplets of Bm
         u_A = np.dot(Qm, U)
@@ -75,13 +74,10 @@ def svd(A, p1, k, m, tol, harmonic=False, largest=True):
             
             #assert_small(delta)
 
-        print "Q", Qm.shape, U.shape, u_A.shape
-        print "V", Pm.shape, V.shape, v_A.shape
         if not harmonic or np.linalg.cond(B) > 1./np.sqrt(epsilon):
             # if not otherwise indicated matrices are with tildes
             # determine new matrices
             P = np.zeros((n, k+1))
-            print "Pm.shape=", Pm.shape, "P.shape", P.shape
 
             P[:, :k] = v_A[:, :k]
             P[:, k] = p_m_plus_1
@@ -127,15 +123,14 @@ def svd(A, p1, k, m, tol, harmonic=False, largest=True):
 
             # DEBUG check the identity from 3.7
             dbg = A.compute_Ax(P) - np.dot(Q, B)
-            for i in range(k+1):
-                print "2 subdelta i=", i, np.sum(np.abs(dbg[:, i]))
-            print A.compute_Ax(P)[:, -1]
-            print np.dot(Q, B)[:, -1]
+            #for i in range(k+1):
+            #    print "2 subdelta i=", i, np.sum(np.abs(dbg[:, i]))
+            #print A.compute_Ax(P)[:, -1]
+            #print np.dot(Q, B)[:, -1]
             
             f_k_plus_1 = A.compute_ATx(r_tilde_k) / norm(r_tilde_k) - norm(r_tilde_k)*p_m_plus_1
             r = f_k_plus_1
             # now a santiy check
-            print "DELTA2=", np.sum(np.abs(A.compute_Ax(P) - np.dot(Q, B)))
             
         else:
             # harmonic and Kappa(B) <= 1/sqrt(epsilon)
@@ -145,7 +140,7 @@ def svd(A, p1, k, m, tol, harmonic=False, largest=True):
             raise NotImplementedError() 
             pass
         # P, Q, B, # append columns and rows and call the new matrices whatever
-        print P.shape, np.zeros((l, m-k)).shape
+
         Pm = np.column_stack([P, np.zeros((n, m-k))])
         Qm = np.column_stack([Q, np.zeros((l, m-k))])
         Bm = np.zeros((B.shape[0] + m-k, 
