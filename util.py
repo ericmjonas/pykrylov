@@ -46,6 +46,22 @@ def min_dist_in_frac(x, a):
         d[xi] = np.abs(delta[di] / a[di])
     return d
 
+def find_closest(x, a):
+    """
+    for each element in x, find the element in a that's closest, 
+    without replacement
+
+    VERY SLOW use only for testing
+    """
+    # convert a to a list so we can remove elements
+    al = list(a)
+    out = []
+    for xv in x:
+        i = np.argmin(np.abs(np.array(al) - xv))
+        out.append(al[i])
+        al.pop(i)
+    return out
+
 
 def assert_upper_triangular(X):
     Xtu = np.tril(X, -1)
