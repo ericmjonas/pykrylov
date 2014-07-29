@@ -56,3 +56,12 @@ def close_zero(x):
         return True
     return False
     
+def orthog(Y, X):
+    """
+    Orthogonalize the column vectors in Y against the column vectors in X
+    """
+    dotY = np.dot(Y.T, X)
+
+    Y = Y - np.dot(X, dotY.T)
+
+    return Y

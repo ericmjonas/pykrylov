@@ -1,6 +1,6 @@
 import numpy as np
 from util import norm
-
+import util
 
 def lanczos_bidiagonalization(A, p0, k):
     """
@@ -106,4 +106,122 @@ def partial_lanczos_bidiagonalization(A, p1, m):
     return P, Q, B, rm
                 
 
+    
+def ablanzbd(A, V, W, F, B, K, 
+             interchange, m_b, n, m,  
+             SVTol, two_reorth=False, iteration = 0):
+    """
+    a fairly close port of the lanczos bidiagonalization step 
+    """
+    def mat_prod(x):
+        if interchange:
+            return A.compute_ATx(x)
+        else:
+            return A.compute_Ax(x)
+
+    def adjoint_prod(x):
+        if interchange:
+            return A.compute_Ax(x)
+        else:
+            return A.compute_ATx(x)
+        
+    J = 0
+
+    # noramlization of starting vector
+    if iteration == 0:
+        V[:, 0] = V[:, 0] / norm(V[:, 0])
+        B = []
+    else:
+        J = K
+
+    W[:, J] =  mat_prod(V[:, J])
+    
+    # input vectors are singular vectors and AV[:, J] which must be 
+    # orthogonalized
+    
+    if iteration > 0:
+        W[:, J] = util.orthog(W[:, J], W[:, :J]) # FIXME possible idnex error
+
+    S = norm(W[:, J])
+    
+    # check for linearly-dependent vectors
+    if S < SVTol:
+        W[:, J] = np.random.normal(0, 1, W.shape[1])
+        W[:, J] = util.orthog(W[:, J], W[:, :J])
+        W[:, J] = W[:, J]/ norm(W[:, J])
+        
+    else:
+        W[:, J] = W[:, J]/ S
+
+    # begin main iteration loop for block lanczos
+    while J  < m_b:
+
+        F =  adjoint_prod(W[:, J])
+
+        # One step of the block classical Gram-Schmidt process
+        F = F - V[:, J] * S
+        
+        # full reorthogonalization, short vectors
+        F = util.orthog(F, V[:, :J])
+
+        
+        if (J+1) < m_b:
+            R = norm(F)
+
+            if R <= SVTol:
+                F = np.random.normal(0, 1, (V.shape[0], 1))
+                F = util.orthog(F, V[:, :J])
+
+                V[:, J+1] = F.flatten() / norm(F)
+                R = 0
+            else:
+                V[:, J+1] = F / R
+
+            # compute block diagonal B
+            if len(B) == 0:
+                B = np.array([[S, R]])
+            else:
+                Bnew = np.zeros((B.shape[0] + 1, 
+                                 B.shape[1] + 1))
+                Bnew[:B.shape[0], 
+                  :B.shape[1]] = B
+                Bnew[-1, -2] = S
+                Bnew[-1, -1] = R
+                B = Bnew
+
+            # W = A*V
+            W[:, J+1] = mat_prod(V[:, J+1])
+    
+            # one step of block classical Gram-Schmidt process:
+            W[:, J+1] = W[:, J+1] - np.dot( W[:, J] , R)
+            
+            if two_reorth:
+                W[:, J+1] = util.orthog(W[:, J+1], W[:, :J]) # FIXME I THINK THESE INCDES ARE OFF
+                
+            # compute norm of W
+            S = norm(W[:, J+1])
+            
+            if S <= SVTol:
+                W[:, J+1] = np.random.normal(0, 1, (W.shape[0], 1))
+                W[:, J+1] = util.orthog(W[:, J+1], W[:, :J])
+                W[:, J+1] = W[:, J+1] / norm(W[:, J+1])
+                S = 0
+            else:
+                W[:, J+1] = W[:, J+1]/S
+                
+                
+        else:
+            # Add last block to matrix B
+            Bnew = np.zeros((B.shape[0]+1,  B.shape[1]))
+            Bnew[:-1, :] = B
+
+            Bnew[-1, -1:] = S
+            B = Bnew
+
+        J += 1
+
+    return V, W, F, B, m
+
+
+    
     

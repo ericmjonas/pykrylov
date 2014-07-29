@@ -6,20 +6,20 @@ from util import norm
 def assert_small(x):
     assert np.abs(x) < 1e-10
 
-def pick_extreme_svd(k, U, s, V, largest):
+def order_svd(U, s, V, largest):
     
     ai = np.argsort(s)
     if largest:
         ai = ai[::-1]
-    print s, s[ai[:k]]
-    return U[:, ai[:k]], s[ai[:k]], V[ai[:k], :]
+
+    return U[:, ai], s[ai], V[ai, :]
         
 def sort_svd(U, s, V):
     ai = np.argsort(s)
     ai = ai[::-1]
     return U[:, ai], s[ai], V[ai, :]
 
-def svd(A, p1, k, m, tol, harmonic=False, largest=True):
+def svd(A, p1, k, m, tol, harmonic=False, largest=True, maxiter=1000):
     """
     Implementation of BR05 for computing singular triplets. 
 
@@ -41,22 +41,28 @@ def svd(A, p1, k, m, tol, harmonic=False, largest=True):
     l, n = A.dims()
 
     Pm, Qm, Bm, rm  = lanczos.partial_lanczos_bidiagonalization(A, p1, m)
-    print "At the beginning", Pm.shape, Qm.shape, Bm.shape
+
     assert_small(np.sum(np.abs(A.compute_Ax(Pm) - np.dot(Qm, Bm))))
     assert_small(np.sum(np.abs(A.compute_ATx(Qm) - np.dot(Pm, Bm.T) - np.outer(rm, np.eye(m)[:, m-1]))))
 
+    running_Anorm_est = 0
+
     iteration = 0
     while True:
-        print "ITERATION", iteration, "-"*40
+        #print "ITERATION", iteration, "-"*40
         U, s, V = np.linalg.svd(Bm, full_matrices=True)
-        U, s, V = pick_extreme_svd(k+1, U, s, V, True)
+        running_Anorm_est = max(running_Anorm_est, np.max(s))
+        
+        U, s, V = order_svd( U, s, V, largest=largest)
         #U, s, V = sort_svd(U, s, V)
-
+        
         B_m_val = norm(rm)
         p_m_plus_1 = rm/B_m_val
             
+        # compute tol
+        good_enough = B_m_val * np.abs(U[m-1, :]) < (tol * running_Anorm_est)
         # 3. check convergence
-        if iteration > 1000:
+        if iteration > maxiter: # or good_enough.all():
             return U[:, :k], s[:k], V[:k]
         # 4. compute augmenting vectors
         # approx singular triplets of A from singular triplets of Bm
