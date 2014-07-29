@@ -1,7 +1,7 @@
 import numpy as np
 
-import lanczos
-import util
+from pykrylov import lanczos
+from pykrylov import util
 
 np.set_printoptions(precision=3)
 

@@ -1,6 +1,6 @@
 import numpy as np
-import givens
-import util
+from pykrylov import givens
+from pykrylov import util
 from nose.tools import * 
 
 

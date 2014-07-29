@@ -1,7 +1,7 @@
 import numpy as np
-import util
-import irlba
-import lanczos
+from pykrylov import util
+from pykrylov import irlba
+from pykrylov import lanczos
 
 
 def test_simple_biggest_default():

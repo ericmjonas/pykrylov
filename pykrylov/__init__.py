@@ -1,2 +1,2 @@
-from  irlba import irlba
+import irlba
 

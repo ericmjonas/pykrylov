@@ -1,6 +1,6 @@
 import numpy as np
 from nose.tools import * 
-import util
+from pykrylov import util
 
 def test_orthog():
 
